@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using CommonGameKit.CommonGameKit.Assets.Dispatcher.Error;
 using CommonGameKit.CommonGameKit.Assets.Dispatcher.Event;
+using CommonGameKit.CommonGameKit.Dispatcher.Error;
 using UnityEngine;
 
 namespace CommonGameKit.CommonGameKit.Assets.Dispatcher.Service

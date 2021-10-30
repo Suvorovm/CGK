@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CommonGameKit.CommonGameKit.Assets.Dispatcher.Error
+namespace CommonGameKit.CommonGameKit.Dispatcher.Error
 {
     public class DispatcherException : Exception
     {
