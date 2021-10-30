@@ -1,0 +1,9 @@
+{
+  "name": "com.suvorov.common",
+  "version": "1.0.0",
+  "displayName": "Common Game Kit",
+  "description": "This is an common Game Kit for Unity",
+  "author": {
+    "name": "suvorov"
+  }
+}
