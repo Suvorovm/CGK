@@ -11,106 +11,109 @@ using UnityEngine;
 
 namespace Client.Core.Snapshot.Service
 {
-    public class SnapshotService : IDisposable
+    public class SnapshotService<T> : IDisposable
+        where T : new()
+
     {
-        private readonly string _fileSavedDir;
+    private readonly string _fileSavedDir;
 
-        private readonly SnapshotFactory _factory;
-        private readonly EventDispatcher _eventDispatcher;
+    private readonly SnapshotFactoryAbstraction _factory;
+    private readonly EventDispatcher _eventDispatcher;
 
 
-        public SnapshotService(SnapshotFactory factory, EventDispatcher eventDispatcher, string fileSavedDir)
+    public SnapshotService(SnapshotFactoryAbstraction factory, EventDispatcher eventDispatcher, string fileSavedDir)
+    {
+        _eventDispatcher = eventDispatcher;
+        _fileSavedDir = fileSavedDir;
+        _factory = factory;
+        _eventDispatcher.AddListener<CreateSnapshotEvent>(CreateSnapshotEvent.CREATE_SNAPSHOT, OnCreateSnapshotEvent);
+    }
+
+    private void OnCreateSnapshotEvent(CreateSnapshotEvent eventModel)
+    {
+        CreateSnapshot();
+    }
+
+    public bool HasValidSnapshot()
+    {
+        return HasFile(GetPath());
+    }
+
+    public void CreateSnapshot()
+    {
+        FieldInfo[] fieldInfos = typeof(T).GetFields();
+        T gameSnapshot = new T();
+        foreach (FieldInfo property in fieldInfos)
         {
-            _eventDispatcher = eventDispatcher;
-            _fileSavedDir = fileSavedDir;
-            _factory = factory;
-            _eventDispatcher.AddListener<CreateSnapshotEvent>(CreateSnapshotEvent.CREATE_SNAPSHOT, OnCreateSnapshotEvent);
+            ISnapshotModel snapshotModel = _factory.CreateSnapshotModelByType(property.FieldType);
+            property.SetValue(gameSnapshot, snapshotModel);
         }
 
-        private void OnCreateSnapshotEvent(CreateSnapshotEvent eventModel)
+        WriteToFile(gameSnapshot);
+    }
+
+    private void WriteToFile(T gameSnapshot)
+    {
+        string json = JsonConvert.SerializeObject(gameSnapshot);
+        Exception exception;
+        try
         {
-            CreateSnapshot();
+            var path = GetPath();
+            FileHandling.CreateDirectoryIfDoesntExistAndWriteAllText(path, json,
+                out exception);
         }
-
-        public bool HasValidSnapshot()
+        catch (Exception ex)
         {
-            return HasFile(GetPath());
+            exception = ex;
+            Debug.LogError("Exception " + ex.Message);
         }
+    }
 
-        public void CreateSnapshot()
+    public void LoadSnapshot()
+    {
+        T gameSnapshot = ReadSaveFile();
+
+        LoadSnapshot(gameSnapshot);
+    }
+
+    private void LoadSnapshot(T gameSnapshot)
+    {
+        FieldInfo[] fieldInfos = typeof(T).GetFields();
+
+        foreach (FieldInfo property in fieldInfos)
         {
-            FieldInfo[] fieldInfos = typeof(GameSnapshot).GetFields();
-            GameSnapshot gameSnapshot = new GameSnapshot();
-            foreach (FieldInfo property in fieldInfos)
-            {
-                ISnapshotModel snapshotModel = _factory.CreateSnapshotModelByType(property.FieldType);
-                property.SetValue(gameSnapshot, snapshotModel);
-            }
-
-            WriteToFile(gameSnapshot);
+            object propertyValue = property.GetValue(gameSnapshot);
+            Type typeProperty = propertyValue.GetType();
+            _factory.SetModel(typeProperty, (ISnapshotModel)propertyValue);
         }
+    }
 
-        private void WriteToFile(GameSnapshot gameSnapshot)
-        {
-            string json = JsonConvert.SerializeObject(gameSnapshot);
-            Exception exception;
-            try
-            {
-                var path = GetPath();
-                FileHandling.CreateDirectoryIfDoesntExistAndWriteAllText(path, json,
-                    out exception);
-            }
-            catch (Exception ex)
-            {
-                exception = ex;
-                Debug.LogError("Exception " + ex.Message);
-            }
-        }
+    private T ReadSaveFile()
+    {
+        string jsonText = File.ReadAllText(GetPath());
 
-        public void LoadSnapshot()
-        {
-            GameSnapshot gameSnapshot = ReadSaveFile();
+        return JsonConvert.DeserializeObject<T>(jsonText);
+    }
 
-            LoadSnapshot(gameSnapshot);
-        }
+    private string GetPath()
+    {
+        return Application.persistentDataPath + _fileSavedDir;
+    }
 
-        private void LoadSnapshot(GameSnapshot gameSnapshot)
-        {
-            FieldInfo[] fieldInfos = typeof(GameSnapshot).GetFields();
+    private bool HasFile(string path)
+    {
+        return File.Exists(path);
+    }
 
-            foreach (FieldInfo property in fieldInfos)
-            {
-                object propertyValue = property.GetValue(gameSnapshot);
-                Type typeProperty = propertyValue.GetType();
-                _factory.SetModel(typeProperty, (ISnapshotModel) propertyValue);
-            }
-        }
+    public void CreateDefaultSnapshot()
+    {
+        LoadSnapshot(new T());
+    }
 
-        private GameSnapshot ReadSaveFile()
-        {
-            string jsonText = File.ReadAllText(GetPath());
-
-            return JsonConvert.DeserializeObject<GameSnapshot>(jsonText);
-        }
-
-        private string GetPath()
-        {
-            return Application.persistentDataPath + _fileSavedDir;
-        }
-
-        private bool HasFile(string path)
-        {
-            return File.Exists(path);
-        }
-
-        public void CreateDefaultSnapshot()
-        {
-            LoadSnapshot(new GameSnapshot());
-        }
-
-        public void Dispose()
-        {
-            _eventDispatcher.RemoveListener<CreateSnapshotEvent>(CreateSnapshotEvent.CREATE_SNAPSHOT, OnCreateSnapshotEvent);
-        }
+    public void Dispose()
+    {
+        _eventDispatcher.RemoveListener<CreateSnapshotEvent>(CreateSnapshotEvent.CREATE_SNAPSHOT,
+            OnCreateSnapshotEvent);
+    }
     }
 }

@@ -1,8 +1,12 @@
 {
   "name": "com.suvorov.common",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "displayName": "Common Game Kit",
   "description": "This is an common Game Kit for Unity",
+  "dependencies": {
+    "jillejr.newtonsoft.json-for-unity.converters": "https://github.com/jilleJr/Newtonsoft.Json-for-Unity.Converters.git#1.5.0",
+    "com.neuecc.unirx": "https://github.com/neuecc/UniRx.git?path=Assets/Plugins/UniRx/Scripts"
+  },
   "author": {
     "name": "suvorov"
   }
