@@ -1,6 +1,6 @@
 {
-  "name": "com.suvorov.CGK",
-  "version": "0.0.4",
+  "name": "com.suvorov.common",
+  "version": "0.0.5",
   "displayName": "Package Example",
   "description": "This is  package for common purpse",
   "unity": "2022.1",
