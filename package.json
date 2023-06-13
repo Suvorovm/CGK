@@ -8,12 +8,12 @@
 
   "dependencies": {
     "jillejr.newtonsoft.json-for-unity.converters": "https://github.com/jilleJr/Newtonsoft.Json-for-Unity.Converters.git#1.5.0",
-    "com.neuecc.unirx": "https://github.com/neuecc/UniRx.git#7.1.0?path=Assets/Plugins/UniRx/Scripts",
+    "com.neuecc.unirx": "https://github.com/neuecc/UniRx.git#7.1.0?path=Assets/Plugins/UniRx/Scripts"
 
  },
  "keywords": [
     "common",
-    "Game",
+    "Game"
   ],
   "author": {
     "name": "suvorov",
