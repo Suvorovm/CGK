@@ -1,14 +1,15 @@
 {
   "name": "com.suvorov.common",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "displayName": "Package Example",
   "description": "This is  package for common purpse",
   "unity": "2022.1",
   "unityRelease": "0b5",
 
   "dependencies": {
-    "jillejr.newtonsoft.json-for-unity.converters": "https://github.com/jilleJr/Newtonsoft.Json-for-Unity.Converters.git#1.5.0",
-    "com.neuecc.unirx": "https://github.com/neuecc/UniRx.git"
+     "com.neuecc.unirx": "https://github.com/neuecc/UniRx.git?path=Assets/Plugins/UniRx/Scripts",
+    "jillejr.newtonsoft.json-for-unity.converters": "https://github.com/jilleJr/Newtonsoft.Json-for-Unity.Converters.git#1.5.0"
+
 
  },
  "keywords": [
