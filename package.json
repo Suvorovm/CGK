@@ -7,8 +7,8 @@
   "unityRelease": "0b5",
 
   "dependencies": {
-    "jillejr.newtonsoft.json-for-unity.converters": "https://github.com/jilleJr/Newtonsoft.Json-for-Unity.Converters.git#1.5.0",
-    "com.neuecc.unirx": "https://github.com/neuecc/UniRx.git#7.0.0"
+    "com.neuecc.unirx": "7.0.0",
+    "jillejr.newtonsoft.json-for-unity.converters": "1.5.0",
 
  },
  "keywords": [
