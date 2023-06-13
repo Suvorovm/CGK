@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using CommonGameKit.com.suvorov.common_e419b53c39.Utils;
 using Core.UI.Model;
-using Core.Utils;
+using CommonGameKit.Utils;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
