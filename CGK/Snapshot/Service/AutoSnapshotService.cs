@@ -1,6 +1,6 @@
 ﻿using System;
 using CGK.Descriptor.Service;
-using CGK.Event.Service;
+using CGK.Dispatcher.Service;
 using CGK.Settings;
 using CGK.Snapshot.Event;
 using UniRx;
@@ -27,7 +27,7 @@ namespace CGK.Snapshot.Service
         private void OnSaveTimeReached()
         {
             Debug.Log("Auto Snapshot Created");
-            _eventDispatcher.Dispatch<CreateSnapshotEvent>( new CreateSnapshotEvent());
+            _eventDispatcher.Dispatch<CreateSnapshotEvent>( new CreateSnapshotEvent(CreateSnapshotEvent.CREATE_SNAPSHOT));
         }
 
         public void Dispose()

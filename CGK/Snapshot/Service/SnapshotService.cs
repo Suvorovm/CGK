@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using CGK.Event.Service;
+using CGK.Dispatcher.Service;
 using CGK.Snapshot.Event;
 using CGK.Snapshot.Factory;
 using CGK.Snapshot.Model;

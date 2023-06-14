@@ -1,10 +1,14 @@
-﻿using CGK.Event.Model;
+﻿
+using CGK.Dispatcher.Event;
 
 namespace CGK.Snapshot.Event
 {
-    public class CreateSnapshotEvent : IEventModel
+    public class CreateSnapshotEvent : GameEvent
     {
         public const string CREATE_SNAPSHOT = "createSnapshot";
-        public string EventName => CREATE_SNAPSHOT;
+
+        public CreateSnapshotEvent(string eventName) : base(eventName)
+        {
+        }
     }
 }
