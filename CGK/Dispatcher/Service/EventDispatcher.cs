@@ -8,7 +8,7 @@ namespace CGK.Dispatcher.Service
 {
     public delegate void EventHandlerDelegate<in T>(T data);
 
-    public class EventDispatcher : MonoBehaviour
+    public class EventDispatcher 
     {
         private readonly Dictionary<string, List<MulticastDelegate>> _events = new Dictionary<string, List<MulticastDelegate>>();
 
