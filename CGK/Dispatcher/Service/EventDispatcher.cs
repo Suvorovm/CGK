@@ -13,11 +13,11 @@ namespace CGK.Dispatcher.Service
         private readonly Dictionary<string, List<MulticastDelegate>> _events = new Dictionary<string, List<MulticastDelegate>>();
 
         public void AddListener<T>(string eventName, EventHandlerDelegate<T> callBack)
-                where T : GameEvent
+            where T : GameEvent
         {
             if (!_events.ContainsKey(eventName)) {
                 _events.Add(eventName, new List<MulticastDelegate>() {
-                        callBack
+                    callBack
                 });
                 return;
             }
@@ -25,7 +25,7 @@ namespace CGK.Dispatcher.Service
         }
 
         public void Dispatch<T>(T gameEvent)
-                where T : GameEvent
+            where T : GameEvent
         {
             if (!_events.ContainsKey(gameEvent.EventName)) {
                 return;
@@ -45,6 +45,17 @@ namespace CGK.Dispatcher.Service
             if (!multicastDelegates.Remove(callBack)) {
                 throw new DispatcherException("Listner are removed or not registrated");
             }
+        }
+        
+        public bool HasListener<T>(string eventName, Action<T> callBack)
+        {
+            if (!_events.ContainsKey(eventName))
+            {
+                return false;
+            }
+
+            List<MulticastDelegate> multicastDelegates = _events[eventName];
+            return multicastDelegates.Contains(callBack);
         }
     }
 }
