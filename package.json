@@ -1,13 +1,13 @@
 {
   "name": "com.suvorov.common",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "displayName": "Package Example",
   "description": "This is  package for common purpse",
   "unity": "2022.1",
   "unityRelease": "0b5",
 
   "dependencies": {
-    "com.suvorov.unirx": "https://github.com/Suvorovm/UniRX-lib.git#0.0.1"
+    "com.suvorov.unirx": "0.0.1"
 
  },
  "keywords": [
