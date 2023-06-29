@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using CGK.ResourceService;
 using CGK.UI.Model;
 using CGK.Utils;
 using Core.UI;
@@ -14,6 +15,7 @@ namespace CGK.UI
         private const string DIALOG_CONTAINER = "DialogContainer";
         private const string SCREEN_CONTAINER = "ScreenContainer";
         private readonly List<DialogData> _dialogs = new List<DialogData>();
+        private readonly CacheResourceService _cacheResourceService;
 
         private GameObject _screenContainer;
         private GameObject _dialogContainer;
@@ -21,6 +23,11 @@ namespace CGK.UI
         private DialogData _currentDialog;
         private MonoBehaviour _currentScreen;
         private int _maxSortingOrder;
+
+        public UIService(CacheResourceService cacheResourceService)
+        {
+            _cacheResourceService = cacheResourceService;
+        }
 
         [PublicAPI]
         public void Init()
@@ -134,7 +141,7 @@ namespace CGK.UI
         private T InstantiateUI<T>(string prefabPath)
             where T : MonoBehaviour
         {
-            GameObject prefab = Resources.Load<GameObject>(prefabPath);
+            GameObject prefab = _cacheResourceService.Load<GameObject>(prefabPath);
             GameObject instantiatedScreen = Instantiate(prefab);
             T screenMonoBehaviour = instantiatedScreen.GetComponent<T>();
             return screenMonoBehaviour;

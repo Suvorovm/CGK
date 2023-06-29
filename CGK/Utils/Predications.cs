@@ -5,12 +5,14 @@ namespace CGK.Utils
 {
     public static class Predications
     {
-        public static void CheckNotNull(GameObject gameObject)
+        public static GameObject CheckNotNull(GameObject gameObject)
         {
             if (ReferenceEquals(gameObject, null))
             {
                 throw new ArgumentException("Argument can't be null");
             }
+
+            return gameObject;
         }
         
         public static void CheckNotNull(MonoBehaviour monoBeh)

@@ -16,14 +16,21 @@ namespace CGK.World
         public GameWorld(EventDispatcher eventDispatcher)
         {
             _eventDispatcher = eventDispatcher;
-            _eventDispatcher.AddListener<GameControllerDestroyedEvent>(
-                GameControllerDestroyedEvent.GAME_CONTROLLER_DESTROYED, OnGameControllerDestroyed);
+            _eventDispatcher.AddListener<GameControllerLifeCycleEvent>(
+                GameControllerLifeCycleEvent.GAME_CONTROLLER_DESTROYED, OnGameControllerDestroyed);
+            _eventDispatcher.AddListener<GameControllerLifeCycleEvent>(
+                GameControllerLifeCycleEvent.GAME_CONTROLLER_CREATED, OnGameControllerCreated);
         }
 
-        private void OnGameControllerDestroyed(GameControllerDestroyedEvent destroyedEvent)
+        private void OnGameControllerCreated(GameControllerLifeCycleEvent gameEvent)
         {
-            _gameControllers.RemoveAll(r => r == destroyedEvent.ObjectToDestroy);
-            GameObject.Destroy(destroyedEvent.ObjectToDestroy.gameObject);
+            _gameControllers.Add(gameEvent.GameController);
+        }
+
+        private void OnGameControllerDestroyed(GameControllerLifeCycleEvent lifeCycleEvent)
+        {
+            _gameControllers.RemoveAll(r => r == lifeCycleEvent.GameController);
+            GameObject.Destroy(lifeCycleEvent.GameController.gameObject);
         }
 
         public void Init(GameObject root)
@@ -56,8 +63,10 @@ namespace CGK.World
         public void Dispose()
         {
             _gameControllers?.Clear();
-            _eventDispatcher.RemoveListener<GameControllerDestroyedEvent>(
-                GameControllerDestroyedEvent.GAME_CONTROLLER_DESTROYED, OnGameControllerDestroyed);
+            _eventDispatcher.RemoveListener<GameControllerLifeCycleEvent>(
+                GameControllerLifeCycleEvent.GAME_CONTROLLER_DESTROYED, OnGameControllerDestroyed);
+            _eventDispatcher.RemoveListener<GameControllerLifeCycleEvent>(
+                GameControllerLifeCycleEvent.GAME_CONTROLLER_CREATED, OnGameControllerCreated);
         }
     }
 }
