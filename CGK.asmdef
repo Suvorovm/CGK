@@ -1,6 +1,6 @@
 {
     "name": "CGK",
-    "rootNamespace": "CGK",
+    "rootNamespace": "",
     "references": [
         "UniRx"
     ],
