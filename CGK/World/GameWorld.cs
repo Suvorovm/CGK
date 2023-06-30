@@ -16,6 +16,7 @@ namespace CGK.World
         public GameWorld(EventDispatcher eventDispatcher)
         {
             _eventDispatcher = eventDispatcher;
+            _gameControllers = new List<GameController>();
             _eventDispatcher.AddListener<GameControllerLifeCycleEvent>(
                 GameControllerLifeCycleEvent.GAME_CONTROLLER_DESTROY, OnGameControllerDestroyed);
             _eventDispatcher.AddListener<GameControllerLifeCycleEvent>(
@@ -38,7 +39,7 @@ namespace CGK.World
         public void Init(GameObject root)
         {
             _rootObject = root;
-            _gameControllers = _rootObject.GetComponentsInChildren<GameController>().ToList();
+            _gameControllers.AddRange(_rootObject.GetComponentsInChildren<GameController>().ToList());
         }
 
         public T[] GetComponents<T>()
