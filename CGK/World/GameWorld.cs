@@ -17,7 +17,7 @@ namespace CGK.World
         {
             _eventDispatcher = eventDispatcher;
             _eventDispatcher.AddListener<GameControllerLifeCycleEvent>(
-                GameControllerLifeCycleEvent.GAME_CONTROLLER_DESTROYED, OnGameControllerDestroyed);
+                GameControllerLifeCycleEvent.GAME_CONTROLLER_DESTROY, OnGameControllerDestroyed);
             _eventDispatcher.AddListener<GameControllerLifeCycleEvent>(
                 GameControllerLifeCycleEvent.GAME_CONTROLLER_CREATED, OnGameControllerCreated);
         }
@@ -30,6 +30,8 @@ namespace CGK.World
         private void OnGameControllerDestroyed(GameControllerLifeCycleEvent lifeCycleEvent)
         {
             _gameControllers.RemoveAll(r => r == lifeCycleEvent.GameController);
+            _eventDispatcher.Dispatch<GameControllerLifeCycleEvent>(new GameControllerLifeCycleEvent(
+                GameControllerLifeCycleEvent.GAME_CONTROLLER_PRE_GAME_OBJECT_DESTROYED, lifeCycleEvent.GameController));
             GameObject.Destroy(lifeCycleEvent.GameController.gameObject);
         }
 
@@ -64,7 +66,7 @@ namespace CGK.World
         {
             _gameControllers?.Clear();
             _eventDispatcher.RemoveListener<GameControllerLifeCycleEvent>(
-                GameControllerLifeCycleEvent.GAME_CONTROLLER_DESTROYED, OnGameControllerDestroyed);
+                GameControllerLifeCycleEvent.GAME_CONTROLLER_DESTROY, OnGameControllerDestroyed);
             _eventDispatcher.RemoveListener<GameControllerLifeCycleEvent>(
                 GameControllerLifeCycleEvent.GAME_CONTROLLER_CREATED, OnGameControllerCreated);
         }

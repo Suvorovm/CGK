@@ -4,7 +4,8 @@ namespace CGK.World.Event
 {
     public class GameControllerLifeCycleEvent : GameEvent
     {
-        public const string GAME_CONTROLLER_DESTROYED = "gameControllerDestroyed";
+        public const string GAME_CONTROLLER_DESTROY = "gameControllerDestroy";
+        public const string GAME_CONTROLLER_PRE_GAME_OBJECT_DESTROYED = "preGameObjectDestroyed";
         public const string GAME_CONTROLLER_CREATED = "gameControllerCreated";
 
         private readonly GameController _gameController;
