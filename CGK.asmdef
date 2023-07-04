@@ -2,7 +2,8 @@
     "name": "CGK",
     "rootNamespace": "",
     "references": [
-        "UniRx"
+        "UniRx",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

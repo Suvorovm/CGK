@@ -251,15 +251,15 @@ namespace CGK.Sound
 
         private void OnApplicationFocus(bool paused)
         {
-            if (SoundManager.PauseSoundsOnApplicationPause)
+            if (PauseSoundsOnApplicationPause)
             {
                 if (paused)
                 {
-                    SoundManager.ResumeAll();
+                    ResumeAll();
                 }
                 else
                 {
-                    SoundManager.PauseAll();
+                    PauseAll();
                 }
             }
         }
