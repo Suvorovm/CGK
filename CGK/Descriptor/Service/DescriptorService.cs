@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
@@ -7,10 +8,10 @@ using UnityEngine;
 
 namespace CGK.Descriptor.Service
 {
+    [Obsolete("Use Descriptor File Loader + DescriptorHolder")]
     public class DescriptorService
     {
         private readonly IList<object> _createdDescriptor = new List<object>();
-
         public void LoadDescriptor<T>(string path)
         {
             TextAsset textAsset = Resources.Load<TextAsset>(path);

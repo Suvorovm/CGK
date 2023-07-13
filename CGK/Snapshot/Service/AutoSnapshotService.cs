@@ -13,11 +13,11 @@ namespace CGK.Snapshot.Service
         private readonly EventDispatcher _eventDispatcher;
         private readonly CompositeDisposable _compositeDisposable;
 
-        public AutoSnapshotService(EventDispatcher eventDispatcher, DescriptorService descriptorService)
+        public AutoSnapshotService(EventDispatcher eventDispatcher, DescriptorHolder holder)
         {
             _eventDispatcher = eventDispatcher;
             _compositeDisposable = new CompositeDisposable();
-            GameConfig gameConfig = descriptorService.GetDescriptor<GameConfig>();
+            GameConfig gameConfig = holder.GetDescriptor<GameConfig>();
             Observable.Interval(TimeSpan.FromSeconds(gameConfig.BuildSettings.AutoSaveTimeOutInSeconds))
                 .Subscribe(_ => OnSaveTimeReached())
                 .AddTo(_compositeDisposable);
