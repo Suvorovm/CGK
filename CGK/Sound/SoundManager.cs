@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using CGK.Sound.Model;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace CGK.Sound
 {
@@ -134,6 +136,7 @@ namespace CGK.Sound
         private static float _musicVolume = 1.0f;
         private static bool _updated;
         private static bool _pauseSoundsOnApplicationPause = true;
+        private static GameObject _soundManagerInitedRoot;
 
         /// <summary>
         /// Maximum number of the same audio clip to play at once
@@ -145,225 +148,11 @@ namespace CGK.Sound
         /// </summary>
         public static bool StopSoundsOnLevelLoad = true;
 
-        private static void EnsureCreated()
+        public static SoundManager Init(GameObject soundManagerRoot)
         {
-            if (!_needsInitialize)
-            {
-                return;
-            }
-            _needsInitialize = false;
-            _root = new GameObject
-            {
-                name = "DigitalRubySoundManager",
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            _instance = _root.AddComponent<SoundManager>();
-            DontDestroyOnLoad(_root);
-        }
-
-        private void StopLoopingListOnLevelLoad(IList<LoopingAudioSource> list)
-        {
-            for (int i = list.Count - 1; i >= 0; i--)
-            {
-                if (!list[i].Persist || !list[i].AudioSource.isPlaying)
-                {
-                    list.RemoveAt(i);
-                }
-            }
-        }
-
-        private void ClearPersistedSounds()
-        {
-            foreach (LoopingAudioSource s in PersistedSounds)
-            {
-                if (!s.AudioSource.isPlaying)
-                {
-                    Destroy(s.AudioSource.gameObject);
-                }
-            }
-
-            PersistedSounds.Clear();
-        }
-
-        private void SceneManagerSceneLoaded(UnityEngine.SceneManagement.Scene s,
-            UnityEngine.SceneManagement.LoadSceneMode m)
-        {
-            // Just in case this is called a bunch of times, we put a check here
-            if (_updated && StopSoundsOnLevelLoad)
-            {
-                _persistTag++;
-
-                _updated = false;
-
-                Debug.LogWarningFormat("Reloaded level, new sound manager persist tag: {0}", _persistTag);
-
-                StopNonLoopingSounds();
-                StopLoopingListOnLevelLoad(Sounds);
-                StopLoopingListOnLevelLoad(Music);
-                SoundsOneShot.Clear();
-                ClearPersistedSounds();
-            }
-        }
-
-        private void Start()
-        {
-            UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneManagerSceneLoaded;
-        }
-
-        private void Update()
-        {
-            _updated = true;
-
-            for (int i = Sounds.Count - 1; i >= 0; i--)
-            {
-                if (Sounds[i].Update())
-                {
-                    Sounds.RemoveAt(i);
-                }
-            }
-
-            for (int i = Music.Count - 1; i >= 0; i--)
-            {
-                bool nullMusic = (Music[i] == null || Music[i].AudioSource == null);
-                if (nullMusic || Music[i].Update())
-                {
-                    if (!nullMusic && Music[i].Tag != _persistTag)
-                    {
-                        Debug.LogWarning("Destroying persisted audio from previous scene: " +
-                                         Music[i].AudioSource.gameObject.name);
-
-                        // cleanup persisted audio from previous scenes
-                        GameObject.Destroy(Music[i].AudioSource.gameObject);
-                    }
-
-                    Music.RemoveAt(i);
-                }
-            }
-
-            for (int i = MusicOneShot.Count - 1; i >= 0; i--)
-            {
-                if (!MusicOneShot[i].isPlaying)
-                {
-                    MusicOneShot.RemoveAt(i);
-                }
-            }
-        }
-
-        private void OnApplicationFocus(bool paused)
-        {
-            if (PauseSoundsOnApplicationPause)
-            {
-                if (paused)
-                {
-                    ResumeAll();
-                }
-                else
-                {
-                    PauseAll();
-                }
-            }
-        }
-
-        private static void UpdateSounds()
-        {
-            foreach (LoopingAudioSource s in Sounds)
-            {
-                s.TargetVolume = s.OriginalTargetVolume * _soundVolume;
-            }
-        }
-
-        private static void UpdateMusic()
-        {
-            foreach (LoopingAudioSource s in Music)
-            {
-                if (!s.Stopping)
-                {
-                    s.TargetVolume = s.OriginalTargetVolume * _musicVolume;
-                }
-            }
-
-            foreach (AudioSource s in MusicOneShot)
-            {
-                s.volume = _musicVolume;
-            }
-        }
-
-        private static IEnumerator RemoveVolumeFromClip(AudioClip clip, float volume)
-        {
-            yield return new WaitForSeconds(clip.length);
-
-            List<float> volumes;
-            if (SoundsOneShot.TryGetValue(clip, out volumes))
-            {
-                volumes.Remove(volume);
-            }
-        }
-
-        private static void PlayLooping(AudioSource source, List<LoopingAudioSource> sources, float volumeScale,
-            float fadeSeconds, bool persist, bool stopAll)
-        {
+            _soundManagerInitedRoot = soundManagerRoot;
             EnsureCreated();
-
-            CheckDuplicateLoopingAudioSource(source, sources, stopAll);
-
-
-            GameObject sourceGameObject = source.gameObject;
-            sourceGameObject.SetActive(true);
-            LoopingAudioSource s = new LoopingAudioSource(source, fadeSeconds, fadeSeconds, persist);
-            s.Play(volumeScale, true);
-            s.Tag = _persistTag;
-            sources.Add(s);
-
-            if (!persist)
-            {
-                return;
-            }
-
-            if (!sourceGameObject.name.StartsWith("PersistedBySoundManager-"))
-            {
-                sourceGameObject.name = "PersistedBySoundManager-" + sourceGameObject.name + "-" +
-                                        sourceGameObject.GetInstanceID();
-            }
-
-            sourceGameObject.transform.parent = null;
-            GameObject.DontDestroyOnLoad(sourceGameObject);
-            PersistedSounds.Add(s);
-        }
-
-        private static void CheckDuplicateLoopingAudioSource(AudioSource source, List<LoopingAudioSource> sources,
-            bool stopAll)
-        {
-            for (int i = sources.Count - 1; i >= 0; i--)
-            {
-                LoopingAudioSource s = sources[i];
-                if (s.AudioSource == source)
-                {
-                    sources.RemoveAt(i);
-                }
-
-                if (stopAll)
-                {
-                    s.Stop();
-                }
-            }
-        }
-
-        private static void StopLooping(AudioSource source, List<LoopingAudioSource> sources)
-        {
-            foreach (LoopingAudioSource s in sources)
-            {
-                if (s.AudioSource == source)
-                {
-                    s.Stop();
-                    source = null;
-                    break;
-                }
-            }
-
-            if (source != null)
-            {
-                source.Stop();
-            }
+            return _instance;
         }
 
         /// <summary>
@@ -408,10 +197,10 @@ namespace CGK.Sound
             float requestedVolume = (volumeScale * _soundVolume);
             if (maxVolume > 0.5f)
             {
-                requestedVolume = (minVolume + maxVolume) / (volumes.Count + 2);
+                requestedVolume = (minVolume + maxVolume) / (volumes.Count + 2) * _soundVolume;
             }
             // else requestedVolume can stay as is
-
+            
             volumes.Add(requestedVolume);
             source.PlayOneShot(clip, requestedVolume);
             _instance.StartCoroutine(RemoveVolumeFromClip(clip, requestedVolume));
@@ -588,7 +377,6 @@ namespace CGK.Sound
                 {
                     return;
                 }
-
                 _musicVolume = value;
                 UpdateMusic();
             }
@@ -602,11 +390,10 @@ namespace CGK.Sound
             get => _soundVolume;
             set
             {
-                if (!Mathf.Approximately(value, _soundVolume))
+                if (Mathf.Approximately(value, _soundVolume))
                 {
                     return;
                 }
-
                 _soundVolume = value;
                 UpdateSounds();
             }
@@ -621,5 +408,254 @@ namespace CGK.Sound
             get { return _pauseSoundsOnApplicationPause; }
             set { _pauseSoundsOnApplicationPause = value; }
         }
+        
+        private static void EnsureCreated()
+        {
+            if (!_needsInitialize)
+            {
+                return;
+            }
+            _needsInitialize = false;
+            if (_soundManagerInitedRoot == null)
+            {
+                _root = new GameObject
+                {
+                    name = "SoundManager",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+            else
+            {
+                _root = _soundManagerInitedRoot;
+            }
+            _instance = _root.AddComponent<SoundManager>(); 
+
+            //DontDestroyOnLoad(_root);
+        }
+
+        private void StopLoopingListOnLevelLoad(IList<LoopingAudioSource> list)
+        {
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                if (!list[i].Persist || !list[i].AudioSource.isPlaying)
+                {
+                    list.RemoveAt(i);
+                }
+            }
+        }
+
+        private void ClearPersistedSounds()
+        {
+            foreach (LoopingAudioSource s in PersistedSounds)
+            {
+                if (!s.AudioSource.isPlaying)
+                {
+                    Destroy(s.AudioSource.gameObject);
+                }
+            }
+
+            PersistedSounds.Clear();
+        }
+
+        private void SceneManagerSceneLoaded(UnityEngine.SceneManagement.Scene s,
+            UnityEngine.SceneManagement.LoadSceneMode m)
+        {
+            // Just in case this is called a bunch of times, we put a check here
+            if (m == LoadSceneMode.Additive)
+            {
+                return;
+            }
+            
+            if (_updated && StopSoundsOnLevelLoad)
+            {
+                _persistTag++;
+
+                _updated = false;
+
+                Debug.LogWarningFormat("Reloaded level, new sound manager persist tag: {0}", _persistTag);
+
+                StopNonLoopingSounds();
+                StopLoopingListOnLevelLoad(Sounds);
+                StopLoopingListOnLevelLoad(Music);
+                SoundsOneShot.Clear();
+                ClearPersistedSounds();
+            }
+        }
+
+        private void Start()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneManagerSceneLoaded;
+        }
+
+        private void Update()
+        {
+            _updated = true;
+
+            for (int i = Sounds.Count - 1; i >= 0; i--)
+            {
+                if (Sounds[i].Update())
+                {
+                    Sounds.RemoveAt(i);
+                }
+            }
+
+            for (int i = Music.Count - 1; i >= 0; i--)
+            {
+                bool nullMusic = (Music[i] == null || Music[i].AudioSource == null);
+                if (nullMusic || Music[i].Update())
+                {
+                    if (!nullMusic && Music[i].Tag != _persistTag)
+                    {
+                        Debug.LogWarning("Destroying persisted audio from previous scene: " +
+                                         Music[i].AudioSource.gameObject.name);
+
+                        // cleanup persisted audio from previous scenes
+                        GameObject.Destroy(Music[i].AudioSource.gameObject);
+                    }
+
+                    Music.RemoveAt(i);
+                }
+            }
+
+            for (int i = MusicOneShot.Count - 1; i >= 0; i--)
+            {
+                if (!MusicOneShot[i].isPlaying)
+                {
+                    MusicOneShot.RemoveAt(i);
+                }
+            }
+        }
+
+        private void OnApplicationFocus(bool paused)
+        {
+            if (PauseSoundsOnApplicationPause)
+            {
+                if (paused)
+                {
+                    ResumeAll();
+                }
+                else
+                {
+                    PauseAll();
+                }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            _needsInitialize = true;
+            _root = null;
+            _instance = null;
+            _persistTag = 0;
+            _soundManagerInitedRoot = null;
+            Music.Clear();
+            SoundsOneShot.Clear();
+            MusicOneShot.Clear();
+            Sounds.Clear();
+            PersistedSounds.Clear();
+        }
+
+        private static void UpdateSounds()
+        {
+            foreach (LoopingAudioSource s in Sounds)
+            {
+                s.TargetVolume = s.OriginalTargetVolume * _soundVolume;
+            }
+        }
+
+        private static void UpdateMusic()
+        {
+            foreach (LoopingAudioSource s in Music)
+            {
+                if (!s.Stopping)
+                {
+                    s.TargetVolume = s.OriginalTargetVolume * _musicVolume;
+                }
+            }
+
+            foreach (AudioSource s in MusicOneShot)
+            {
+                s.volume = _musicVolume;
+            }
+        }
+
+        private static IEnumerator RemoveVolumeFromClip(AudioClip clip, float volume)
+        {
+            yield return new WaitForSeconds(clip.length);
+
+            List<float> volumes;
+            if (SoundsOneShot.TryGetValue(clip, out volumes))
+            {
+                volumes.Remove(volume);
+            }
+        }
+
+        private static void PlayLooping(AudioSource source, List<LoopingAudioSource> sources, float volumeScale,
+            float fadeSeconds, bool persist, bool stopAll)
+        {
+            EnsureCreated();
+
+            CheckDuplicateLoopingAudioSource(source, sources, stopAll);
+
+
+            GameObject sourceGameObject = source.gameObject;
+            sourceGameObject.SetActive(true);
+            LoopingAudioSource s = new LoopingAudioSource(source, fadeSeconds, fadeSeconds, persist);
+            s.Play(volumeScale, true);
+            s.Tag = _persistTag;
+            sources.Add(s);
+
+            if (!persist)
+            {
+                return;
+            }
+
+            if (!sourceGameObject.name.StartsWith("PersistedBySoundManager-"))
+            {
+                sourceGameObject.name = "PersistedBySoundManager-" + sourceGameObject.name + "-" +
+                                        sourceGameObject.GetInstanceID();
+            }
+
+            sourceGameObject.transform.parent = null;
+            GameObject.DontDestroyOnLoad(sourceGameObject);
+            PersistedSounds.Add(s);
+        }
+
+        private static void CheckDuplicateLoopingAudioSource(AudioSource source, List<LoopingAudioSource> sources,
+            bool stopAll)
+        {
+            for (int i = sources.Count - 1; i >= 0; i--)
+            {
+                LoopingAudioSource s = sources[i];
+                if (s.AudioSource == source)
+                {
+                    sources.RemoveAt(i);
+                }
+
+                if (stopAll)
+                {
+                    s.Stop();
+                }
+            }
+        }
+
+        private static void StopLooping(AudioSource source, List<LoopingAudioSource> sources)
+        {
+            foreach (LoopingAudioSource s in sources)
+            {
+                if (s.AudioSource == source)
+                {
+                    s.Stop();
+                    source = null;
+                    break;
+                }
+            }
+
+            if (source != null)
+            {
+                source.Stop();
+            }
+        }
+
     }
 }
