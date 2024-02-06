@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityObject = UnityEngine.Object;
 
-namespace Core.Utils
+namespace CGK.Utils
 {
     public static class GameObjectUtils
     {

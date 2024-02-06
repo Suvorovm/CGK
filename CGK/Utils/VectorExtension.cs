@@ -1,8 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-
-public static class VectorExtension 
+namespace CGK.Utils
+{
+    public static class VectorExtension 
 {
     public static Vector2 ToVector2(this Vector3 vec3)
     {
@@ -187,4 +188,5 @@ public static class VectorExtension
 
         return v;
     }
+}
 }

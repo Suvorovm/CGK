@@ -1,7 +1,7 @@
 using System.IO;
 using UnityEngine;
 
-namespace Core.Utils
+namespace CGK.Utils
 {
     public static class DataHelper
     {

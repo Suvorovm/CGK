@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Core.Utils
+namespace CGK.Utils
 {
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
 
