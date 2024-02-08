@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace CGK.Utils.Editor
 {
+#if UNITY_EDITOR
 	[CustomPropertyDrawer(typeof(CGK.Utils.ReadOnly))]
 	public class ReadOnlyDrawer : PropertyDrawer
 	{
@@ -21,4 +22,5 @@ namespace CGK.Utils.Editor
 			return EditorGUI.GetPropertyHeight(property, true);
 		}
 	}
+#endif
 }
