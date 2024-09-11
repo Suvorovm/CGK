@@ -20,6 +20,28 @@ namespace CGK.Descriptor.Service
 
             return (T) descriptor;
         }
+        public DescriptorCollection<T> LoadDescriptorCollection<T>(string filePath, string rootElementName,
+            string collectionElementName)
+        {
+            TextAsset textAsset = Resources.Load<TextAsset>(filePath);
 
+            if (textAsset == null)
+            {
+                throw new FileNotFoundException($"File not found at path: {filePath}");
+            }
+
+            var xmlOverrides = new XmlAttributeOverrides();
+            var attributes = new XmlAttributes { XmlElements = { new XmlElementAttribute(collectionElementName) } };
+            xmlOverrides.Add(typeof(DescriptorCollection<T>), "Collection", attributes);
+
+            var serializer = new XmlSerializer(typeof(DescriptorCollection<T>), xmlOverrides, null,
+                new XmlRootAttribute(rootElementName), null);
+
+            using (var reader = new StringReader(textAsset.text))
+            {
+                var result = (DescriptorCollection<T>) serializer.Deserialize(reader);
+                return result;
+            }
+        }
     }
 }

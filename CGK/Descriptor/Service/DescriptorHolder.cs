@@ -7,6 +7,7 @@ namespace CGK.Descriptor.Service
     public class DescriptorHolder
     {
         private readonly List<object> _createdDescriptor = new List<object>();
+        private List<object> _collections = new List<object>();
 
         public void Register<T>(T newDescriptor)
         {
@@ -40,7 +41,18 @@ namespace CGK.Descriptor.Service
 
             return (T)descriptor;
         }
+        
+        public void RegisterCollection<T, TP>(T collection)
+            where T : DescriptorCollection<TP>
+        {
+            _collections.Add(collection);
+        }
 
+        public DescriptorCollection<TP> GetCollection<T, TP>()
+            where T : DescriptorCollection<TP>
+        {
+            return _collections.OfType<DescriptorCollection<TP>>().First();
+        }
         public List<object> GetAllDescriptors<T>()
         {
             List<object> descriptor = _createdDescriptor.Where((s) => s is T).ToList();
