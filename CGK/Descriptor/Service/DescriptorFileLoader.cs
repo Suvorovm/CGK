@@ -20,7 +20,7 @@ namespace CGK.Descriptor.Service
 
             return (T) descriptor;
         }
-        public static DescriptorCollection<T> LoadDescriptorCollection<T>(string filePath, string rootElementName,
+        public DescriptorCollection<T> LoadDescriptorCollection<T>(string filePath, string rootElementName,
             string collectionElementName)
         {
             TextAsset textAsset = Resources.Load<TextAsset>(filePath);
