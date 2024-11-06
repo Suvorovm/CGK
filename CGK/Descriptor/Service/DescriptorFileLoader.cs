@@ -7,11 +7,10 @@ namespace CGK.Descriptor.Service
 {
     public class DescriptorFileLoader
     {
-        public T LoadDescriptor<T>(string path)
+        public T LoadDescriptorFromString<T>(string content)
         {
-            TextAsset textAsset = Resources.Load<TextAsset>(path);
             XmlDocument doc = new XmlDocument();
-            doc.LoadXml(textAsset.text);
+            doc.LoadXml(content);
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(T));
             object descriptor;
             using (TextReader textReader = new StringReader(doc.OuterXml)) {
@@ -20,6 +19,12 @@ namespace CGK.Descriptor.Service
 
             return (T) descriptor;
         }
+        public T LoadDescriptor<T>(string path)
+        {
+            TextAsset textAsset = Resources.Load<TextAsset>(path);
+            return LoadDescriptorFromString<T>(textAsset.text)
+        }
+        
         public DescriptorCollection<T> LoadDescriptorCollection<T>(string filePath, string rootElementName,
             string collectionElementName)
         {
