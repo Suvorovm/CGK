@@ -22,7 +22,7 @@ namespace CGK.Descriptor.Service
         public T LoadDescriptor<T>(string path)
         {
             TextAsset textAsset = Resources.Load<TextAsset>(path);
-            return LoadDescriptorFromString<T>(textAsset.text)
+            return LoadDescriptorFromString<T>(textAsset.text);
         }
         
         public DescriptorCollection<T> LoadDescriptorCollection<T>(string filePath, string rootElementName,
