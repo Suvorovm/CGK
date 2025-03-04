@@ -27,7 +27,7 @@ namespace CGK.Descriptor.Service
                 return;
             }
 
-            _createdDescriptor.RemoveAll(t => t is T);
+            _createdDescriptor.RemoveAll(t => t.GetType() == typeof(T));
             _createdDescriptor.Add(newDescriptor);
         }
 
