@@ -30,6 +30,17 @@ namespace CGK.Descriptor.Service
             _createdDescriptor.RemoveAll(t => t.GetType() == typeof(T));
             _createdDescriptor.Add(newDescriptor);
         }
+        
+        public void OverrideDescriptor<T>(T newDescriptor, Type typeToDelete)
+        {
+            if (newDescriptor == null)
+            {
+                return;
+            }
+
+            _createdDescriptor.RemoveAll(t => t.GetType() == typeToDelete);
+            _createdDescriptor.Add(newDescriptor);
+        }
 
         public T GetDescriptor<T>()
         {
