@@ -3,6 +3,6 @@
     //MARK interface
     public interface ISnapshotModel
     {
-        
+        public int GetSnapshotVersion();
     }
 }
