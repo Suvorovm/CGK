@@ -18,7 +18,7 @@ namespace CGK.Utils
 
         private class UnityRandomProvider : IRandomProvider
         {
-            public int GetRandomIndex(int minInclusive, int maxExclusive) => Random.Range(minInclusive, maxExclusive);
+            public int GetRandomIndex(int minInclusive, int maxExclusive) => UnityEngine.Random.Range(minInclusive, maxExclusive);
         }
 
         #region Insert and Remove
