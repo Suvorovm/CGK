@@ -14,6 +14,14 @@ namespace CGK.Utils
             return allChild.FirstOrDefault(g => g.name.Equals(name));
         }
         
+        public static void SetLayerRecursively(this GameObject target, int layerIndex)
+        {
+            foreach (Transform innerTransform in target.transform)
+            {
+                innerTransform.gameObject.layer = layerIndex;
+            }
+        }
+        
         /// <summary>
         /// Returns all children of GO. May be expensive if GameObject has a lot of children. Invoke iteration by Transform
         /// </summary>
