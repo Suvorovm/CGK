@@ -16,12 +16,22 @@ namespace CGK.Utils
 
             return !ReferenceEquals(target, null) && target == null;
         }
-
-        public static void SetLayerRecursively(this GameObject target, int layerIndex)
+        
+        public static void SetLayerRecursively(this GameObject gameObject, int layer)
         {
-            foreach (Transform innerTransform in target.transform)
+            if (gameObject == null)
             {
-                innerTransform.gameObject.layer = layerIndex;
+                return;
+            }
+
+            gameObject.layer = layer;
+
+            foreach (Transform child in gameObject.transform)
+            {
+                if (child != null)
+                {
+                    child.gameObject.SetLayerRecursively(layer);
+                }
             }
         }
 
