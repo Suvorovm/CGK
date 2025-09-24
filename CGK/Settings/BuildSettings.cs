@@ -10,5 +10,8 @@ namespace CGK.Settings
         
         [XmlAttribute("autoSaveTimeOutInSeconds")]
         public int AutoSaveTimeOutInSeconds;
+
+        [XmlAttribute("encrypt")]
+        public bool Encrypt;
     }
 }
