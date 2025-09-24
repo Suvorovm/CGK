@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace CGK.Descriptor.Service
 {
-    public class DescriptorFileLoader
+    public class DescriptorFileLoader : IDescriptorFileLoader
     {
         public T LoadDescriptorFromString<T>(string content)
         {

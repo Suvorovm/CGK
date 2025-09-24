@@ -12,6 +12,7 @@ namespace CGK.Encryption.Editor
 {
     public class EncryptionBuildProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
+        private const string PATH_TO_ROOT_CONFIG = "Assets/Config";
         private EncryptionConfig _config;
         private BuildProcess _buildProcess;
         private string _keyFilePath;
@@ -25,7 +26,7 @@ namespace CGK.Encryption.Editor
             Debug.Log("[Encryption] Preprocess build started");
 
             // Загружаем GameConfig
-            string gameConfigPath = Path.Combine("Assets/Config", "GameConfig.xml");
+            string gameConfigPath = Path.Combine(PATH_TO_ROOT_CONFIG, "GameConfig.xml");
             if (!File.Exists(gameConfigPath))
             {
                 Debug.Log("[Encryption] GameConfig.xml Not fount. No Encryption.");
@@ -33,6 +34,7 @@ namespace CGK.Encryption.Editor
                 return;
             }
 
+            EncryptionInto encryptionInto = new EncryptionInto() { IsEncrypted = false };
             DescriptorFileLoader loader = new DescriptorFileLoader();
             GameConfig gameConfig;
             using (StreamReader reader = new StreamReader(gameConfigPath))
@@ -45,6 +47,7 @@ namespace CGK.Encryption.Editor
             {
                 Debug.Log("[Encryption] Encryption off в GameConfig.xml.");
                 _skipEncryption = true;
+                SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_ROOT_CONFIG, "encrypt.json"));
                 return;
             }
 
@@ -54,6 +57,7 @@ namespace CGK.Encryption.Editor
             {
                 Debug.LogError("[Encryption] EncryptionConfig.xml not found!");
                 _skipEncryption = true;
+                SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_ROOT_CONFIG, "encrypt.json"));
                 return;
             }
 
@@ -76,9 +80,10 @@ namespace CGK.Encryption.Editor
 
             // Запускаем шифрование
             _buildProcess.Run();
-
+            encryptionInto.IsEncrypted = true;
             AssetDatabase.ImportAsset(RelativePath(_keyFilePath));
             AssetDatabase.Refresh();
+            SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_ROOT_CONFIG, "encrypt.json"));
 
             Debug.Log("[Encryption] Preprocess build finished");
         }
@@ -107,6 +112,15 @@ namespace CGK.Encryption.Editor
             Debug.Log("[Encryption] Postprocess build finished");
         }
 
+        private void SaveEncryptFlag(EncryptionInto encryptionInto, string path)
+        {
+            string json = JsonUtility.ToJson(encryptionInto, true);
+            File.WriteAllText(path, json);
+            string relativePath = RelativePath(path);
+            AssetDatabase.ImportAsset(relativePath, ImportAssetOptions.ForceUpdate);
+            Debug.Log("Build data saved to JSON.");
+
+        }
         private static string RelativePath(string fullPath)
         {
             fullPath = fullPath.Replace("\\", "/");
