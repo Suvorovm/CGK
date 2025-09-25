@@ -1,14 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using CGK.Encryption.Descriptor;
+using UnityEngine;
 
-namespace CGK.Encryption
+namespace CGK.Encryption.Editor
 {
     public class BuildProcess
     {
         private const string GENERATED_KEY_PATH = "Assets/Scripts/Encryption/generated";
+        private const string BYTES_EXTENSION = ".enc";
 
         private readonly EncryptionConfig _config;
 
@@ -17,31 +19,47 @@ namespace CGK.Encryption
             _config = config ?? throw new ArgumentNullException(nameof(config));
         }
 
-        /// <summary>
-        /// Encrypts configs and generates EncryptionKeyHolder.cs (with an already hashed key).
-        /// </summary>
-        public void Run()
+        public List<string> Run(string backupPath)
         {
-            EncryptConfigs();
+            List<string> createdEncryptedFiles = new List<string>();
+            EncryptConfigs(backupPath, createdEncryptedFiles);
             GenerateKeyClass();
+            return createdEncryptedFiles;
         }
 
-        private void EncryptConfigs()
+        private void EncryptConfigs(string backupPath, List<string> createdEncryptedFiles)
         {
-            string[] files = Directory.GetFiles(_config.FolderPath, "*.xml");
+            string[] files = Directory.GetFiles(backupPath, "*.xml");
+            if (files.Length == 0)
+            {
+                Debug.LogWarning($"[Encryption] No XML files found in backup {backupPath}");
+                return;
+            }
+
             foreach (string file in files)
             {
-                byte[] plainBytes = File.ReadAllBytes(file);
-
-                byte[] keyHash;
-                using (SHA256 sha256 = SHA256.Create())
+                try
                 {
-                    keyHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(_config.EncryptionKey));
-                }
+                    byte[] plainBytes = File.ReadAllBytes(file);
 
-                byte[] encrypted = Encrypt(plainBytes, keyHash);
-                string outPath = file + ".enc";
-                File.WriteAllBytes(outPath, encrypted);
+                    byte[] keyHash;
+                    using (SHA256 sha256 = SHA256.Create())
+                    {
+                        keyHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(_config.EncryptionKey));
+                    }
+
+                    byte[] encrypted = Encrypt(plainBytes, keyHash);
+                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file);
+                    string outPath = Path.Combine(_config.FolderPath, fileNameWithoutExtension + BYTES_EXTENSION);
+                    File.WriteAllBytes(outPath, encrypted);
+                    createdEncryptedFiles.Add(outPath);
+                    Debug.Log($"[Encryption] Encrypted {Path.GetFileName(file)} from backup to {Path.GetFileName(outPath)}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[Encryption] Failed to encrypt {file}: {ex.Message}");
+                    throw;
+                }
             }
         }
 
@@ -59,10 +77,6 @@ namespace CGK.Encryption
 
 namespace RuntimeSecurity
 {{
-    /// <summary>
-    /// The generated key provider (sewn in at the build stage).
-    /// Stores the hash (SHA-256) Depending on the original key string, this is the AES encryption key itself.
-    /// </summary>
     internal sealed class EncryptionKeyHolder : IEncryptionKeyProvider
     {{
         public static readonly byte[] Key = new byte[] {{ {byteArrayString} }};
@@ -74,6 +88,7 @@ namespace RuntimeSecurity
             Directory.CreateDirectory(GENERATED_KEY_PATH);
             string path = Path.Combine(GENERATED_KEY_PATH, "EncryptionKeyHolder.cs");
             File.WriteAllText(path, code, Encoding.UTF8);
+            Debug.Log($"[Encryption] Generated {path}");
         }
 
         private static byte[] Encrypt(byte[] data, byte[] key)

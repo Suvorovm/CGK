@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEditor.Build;
@@ -16,18 +17,22 @@ namespace CGK.Encryption.Editor
         private const string PATH_TO_GAME_CONFIG = "Assets/Resources/Config";
         private const string GENERATED_KEY_PATH = "Assets/Scripts/Encryption/generated";
         private const string TEMP_BACKUP_PATH = "Temp/EncryptionBackup";
+        private const string BYTES_EXTENSION = ".enc";
 
         private EncryptionConfig _config;
         private BuildProcess _buildProcess;
         private string _keyFilePath;
         private string _backupKeyContent;
         private bool _skipEncryption;
+        private List<string> _createdEncryptedFiles;
 
-        public int callbackOrder => 0;
+        public int callbackOrder => -1000; // Ранний запуск
 
         public void OnPreprocessBuild(BuildReport report)
         {
             Debug.Log("[Encryption] Preprocess build started");
+
+            _createdEncryptedFiles = new List<string>();
 
             string gameConfigPath = Path.Combine(PATH_TO_GAME_CONFIG, "GameConfig.xml");
             if (!File.Exists(gameConfigPath))
@@ -85,26 +90,60 @@ namespace CGK.Encryption.Editor
             Directory.CreateDirectory(backupPath);
             foreach (string file in Directory.GetFiles(_config.FolderPath, "*.xml"))
             {
-                string fileName = Path.GetFileName(file);
-                string backupFilePath = Path.Combine(backupPath, fileName);
-                File.Copy(file, backupFilePath, true);
-                File.Delete(file);
-                Debug.Log($"[Encryption] Backed up {fileName} to {backupFilePath} and deleted original");
-                AssetDatabase.ImportAsset(RelativePath(file), ImportAssetOptions.ForceUpdate);
+                try
+                {
+                    string fileName = Path.GetFileName(file);
+                    string backupFilePath = Path.Combine(backupPath, fileName);
+                    File.Copy(file, backupFilePath, true);
+                    File.Delete(file);
+                    string relativePath = RelativePath(file);
+                    AssetDatabase.DeleteAsset(relativePath);
+                    Debug.Log($"[Encryption] Backed up {fileName} to {backupFilePath} and deleted original");
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"[Encryption] Failed to backup or delete {file}: {ex.Message}");
+                    throw;
+                }
             }
-            AssetDatabase.Refresh();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-            _buildProcess.Run();
+            // Encrypt files and track created .bytes files
+            _createdEncryptedFiles = _buildProcess.Run(backupPath);
             encryptionInto.IsEncrypted = true;
-            foreach (string encFile in Directory.GetFiles(_config.FolderPath, "*.enc"))
+
+            if (_createdEncryptedFiles.Count == 0)
             {
-                AssetDatabase.ImportAsset(RelativePath(encFile), ImportAssetOptions.ForceUpdate);
+                Debug.LogError($"[Encryption] No .bytes files created in {_config.FolderPath}. Build may fail!");
             }
-            AssetDatabase.ImportAsset(RelativePath(_keyFilePath));
-            AssetDatabase.Refresh();
+
+            // Import encrypted files
+            foreach (string encFile in _createdEncryptedFiles)
+            {
+                string relativePath = RelativePath(encFile);
+                AssetDatabase.ImportAsset(relativePath, ImportAssetOptions.ForceUpdate);
+                var importer = AssetImporter.GetAtPath(relativePath);
+                if (importer != null)
+                {
+                    importer.assetBundleName = null;
+                    importer.userData = "EncryptedConfig";
+                    importer.SaveAndReimport();
+                    Debug.Log($"[Encryption] Imported and configured {relativePath} as TextAsset");
+                }
+                else
+                {
+                    Debug.LogError($"[Encryption] Failed to get AssetImporter for {relativePath}");
+                }
+            }
+
+            AssetDatabase.ImportAsset(RelativePath(_keyFilePath), ImportAssetOptions.ForceUpdate);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+
             SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_GAME_CONFIG, "encrypt.json"));
 
-            Debug.Log("[Encryption] Preprocess build finished");
+            Debug.Log($"[Encryption] Preprocess build finished. Created {_createdEncryptedFiles.Count} encrypted files.");
         }
 
         public void OnPostprocessBuild(BuildReport report)
@@ -118,10 +157,15 @@ namespace CGK.Encryption.Editor
             Debug.Log("[Encryption] Postprocess build started");
 
             // Delete encrypted files
-            foreach (string encFile in Directory.GetFiles(_config.FolderPath, "*.enc"))
+            foreach (string encFile in _createdEncryptedFiles)
             {
-                File.Delete(encFile);
-                Debug.Log($"[Encryption] Deleted encrypted file {encFile}");
+                if (File.Exists(encFile))
+                {
+                    string relativePath = RelativePath(encFile);
+                    File.Delete(encFile);
+                    AssetDatabase.DeleteAsset(relativePath);
+                    Debug.Log($"[Encryption] Deleted encrypted file: {relativePath}");
+                }
             }
 
             // Restore original XML files from backup
@@ -130,20 +174,33 @@ namespace CGK.Encryption.Editor
             {
                 foreach (string backupFile in Directory.GetFiles(backupPath, "*.xml"))
                 {
-                    string fileName = Path.GetFileName(backupFile);
-                    string originalPath = Path.Combine(_config.FolderPath, fileName);
-                    File.Copy(backupFile, originalPath, true);
-                    Debug.Log($"[Encryption] Restored {fileName} to {originalPath}");
-                    AssetDatabase.ImportAsset(RelativePath(originalPath), ImportAssetOptions.ForceUpdate);
+                    try
+                    {
+                        string fileName = Path.GetFileName(backupFile);
+                        string originalPath = Path.Combine(_config.FolderPath, fileName);
+                        File.Copy(backupFile, originalPath, true);
+                        string relativePath = RelativePath(originalPath);
+                        AssetDatabase.ImportAsset(relativePath, ImportAssetOptions.ForceUpdate);
+                        Debug.Log($"[Encryption] Restored {fileName} to {relativePath}");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"[Encryption] Failed to restore {backupFile}: {ex.Message}");
+                        throw;
+                    }
                 }
                 Directory.Delete(backupPath, true);
                 Debug.Log($"[Encryption] Deleted backup folder {backupPath}");
             }
+            else
+            {
+                Debug.LogError($"[Encryption] Backup folder {backupPath} not found. XML files not restored!");
+            }
 
             File.WriteAllText(_keyFilePath, GenerateStubContent(), Encoding.UTF8);
-
-            AssetDatabase.ImportAsset(RelativePath(_keyFilePath));
-            AssetDatabase.Refresh();
+            AssetDatabase.ImportAsset(RelativePath(_keyFilePath), ImportAssetOptions.ForceUpdate);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
             Debug.Log("[Encryption] Postprocess build finished");
         }
@@ -154,7 +211,7 @@ namespace CGK.Encryption.Editor
             File.WriteAllText(path, json, Encoding.UTF8);
             string relativePath = RelativePath(path);
             AssetDatabase.ImportAsset(relativePath, ImportAssetOptions.ForceUpdate);
-            Debug.Log("Build data saved to JSON.");
+            Debug.Log($"[Encryption] Encryption flag saved to: {relativePath}");
         }
 
         private static string RelativePath(string fullPath)
@@ -176,4 +233,5 @@ namespace RuntimeSecurity
 }";
         }
     }
+    
 }
