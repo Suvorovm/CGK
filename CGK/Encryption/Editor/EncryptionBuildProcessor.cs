@@ -80,7 +80,7 @@ namespace CGK.Encryption.Editor
                 Debug.Log("[Encryption] Created stub EncryptionKeyHolder.cs");
             }
 
-            // Create backup of XML files before encryption
+            // Create backup and delete original XML files
             string backupPath = Path.Combine(Directory.GetCurrentDirectory(), TEMP_BACKUP_PATH);
             Directory.CreateDirectory(backupPath);
             foreach (string file in Directory.GetFiles(_config.FolderPath, "*.xml"))
@@ -88,11 +88,18 @@ namespace CGK.Encryption.Editor
                 string fileName = Path.GetFileName(file);
                 string backupFilePath = Path.Combine(backupPath, fileName);
                 File.Copy(file, backupFilePath, true);
-                Debug.Log($"[Encryption] Backed up {fileName} to {backupFilePath}");
+                File.Delete(file);
+                Debug.Log($"[Encryption] Backed up {fileName} to {backupFilePath} and deleted original");
+                AssetDatabase.ImportAsset(RelativePath(file), ImportAssetOptions.ForceUpdate);
             }
+            AssetDatabase.Refresh();
 
             _buildProcess.Run();
             encryptionInto.IsEncrypted = true;
+            foreach (string encFile in Directory.GetFiles(_config.FolderPath, "*.enc"))
+            {
+                AssetDatabase.ImportAsset(RelativePath(encFile), ImportAssetOptions.ForceUpdate);
+            }
             AssetDatabase.ImportAsset(RelativePath(_keyFilePath));
             AssetDatabase.Refresh();
             SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_GAME_CONFIG, "encrypt.json"));
@@ -127,6 +134,7 @@ namespace CGK.Encryption.Editor
                     string originalPath = Path.Combine(_config.FolderPath, fileName);
                     File.Copy(backupFile, originalPath, true);
                     Debug.Log($"[Encryption] Restored {fileName} to {originalPath}");
+                    AssetDatabase.ImportAsset(RelativePath(originalPath), ImportAssetOptions.ForceUpdate);
                 }
                 Directory.Delete(backupPath, true);
                 Debug.Log($"[Encryption] Deleted backup folder {backupPath}");
