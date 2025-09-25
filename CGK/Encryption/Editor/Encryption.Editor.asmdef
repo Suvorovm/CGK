@@ -1,11 +1,13 @@
 {
     "name": "Encryption.Editor",
     "rootNamespace": "",
-    "references": ["CGK"],
-    "includePlatforms": [],
-    "excludePlatforms": [
+    "references": [
+        "CGK"
+    ],
+    "includePlatforms": [
         "Editor"
     ],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
