@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -113,7 +114,7 @@ namespace CGK.Encryption.Editor
         private void SaveEncryptFlag(EncryptionInto encryptionInto, string path)
         {
             string json = JsonUtility.ToJson(encryptionInto, true);
-            File.WriteAllText(path, json);
+            File.WriteAllText(path, json, Encoding.UTF8);
             string relativePath = RelativePath(path);
             AssetDatabase.ImportAsset(relativePath, ImportAssetOptions.ForceUpdate);
             Debug.Log("Build data saved to JSON.");
