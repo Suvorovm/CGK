@@ -8,6 +8,8 @@ namespace CGK.Encryption
 {
     public class BuildProcess
     {
+        private const string GENERATED_KEY_PATH = "Assets/Scripts/Encryption/generated";
+
         private readonly EncryptionConfig _config;
 
         public BuildProcess(EncryptionConfig config)
@@ -53,7 +55,7 @@ namespace CGK.Encryption
 
             string byteArrayString = string.Join(", ", keyHash);
 
-            string code = $@"using EncryptionTool;
+            string code = $@"using CGK.Encryption.Abstraction;
 
 namespace RuntimeSecurity
 {{
@@ -68,11 +70,9 @@ namespace RuntimeSecurity
         public byte[] GetKey() => Key;
     }}
 }}";
-            string projectRoot = Directory.GetCurrentDirectory(); 
-            string targetFolder = Path.Combine(projectRoot, "Assets", "Scripts");
-            Directory.CreateDirectory(targetFolder); 
-            
-            string path = Path.Combine(targetFolder, "EncryptionKeyHolder.cs");
+
+            Directory.CreateDirectory(GENERATED_KEY_PATH);
+            string path = Path.Combine(GENERATED_KEY_PATH, "EncryptionKeyHolder.cs");
             File.WriteAllText(path, code, Encoding.UTF8);
         }
 
@@ -87,7 +87,6 @@ namespace RuntimeSecurity
             cs.Write(data, 0, data.Length);
             cs.FlushFinalBlock();
             return ms.ToArray();
-
         }
     }
 }
