@@ -15,6 +15,7 @@ namespace CGK.Encryption.Editor
         private const string PATH_TO_ROOT_CONFIG = "Assets/Config";
         private const string PATH_TO_GAME_CONFIG = "Assets/Resources/Config";
         private const string GENERATED_KEY_PATH = "Assets/Scripts/Encryption/generated";
+        private const string TEMP_BACKUP_PATH = "Temp/EncryptionBackup";
 
         private EncryptionConfig _config;
         private BuildProcess _buildProcess;
@@ -75,8 +76,19 @@ namespace CGK.Encryption.Editor
             else
             {
                 _backupKeyContent = GenerateStubContent();
-                File.WriteAllText(_keyFilePath, _backupKeyContent);
+                File.WriteAllText(_keyFilePath, _backupKeyContent, Encoding.UTF8);
                 Debug.Log("[Encryption] Created stub EncryptionKeyHolder.cs");
+            }
+
+            // Create backup of XML files before encryption
+            string backupPath = Path.Combine(Directory.GetCurrentDirectory(), TEMP_BACKUP_PATH);
+            Directory.CreateDirectory(backupPath);
+            foreach (string file in Directory.GetFiles(_config.FolderPath, "*.xml"))
+            {
+                string fileName = Path.GetFileName(file);
+                string backupFilePath = Path.Combine(backupPath, fileName);
+                File.Copy(file, backupFilePath, true);
+                Debug.Log($"[Encryption] Backed up {fileName} to {backupFilePath}");
             }
 
             _buildProcess.Run();
@@ -98,12 +110,29 @@ namespace CGK.Encryption.Editor
 
             Debug.Log("[Encryption] Postprocess build started");
 
+            // Delete encrypted files
             foreach (string encFile in Directory.GetFiles(_config.FolderPath, "*.enc"))
             {
                 File.Delete(encFile);
+                Debug.Log($"[Encryption] Deleted encrypted file {encFile}");
             }
 
-            File.WriteAllText(_keyFilePath, GenerateStubContent());
+            // Restore original XML files from backup
+            string backupPath = Path.Combine(Directory.GetCurrentDirectory(), TEMP_BACKUP_PATH);
+            if (Directory.Exists(backupPath))
+            {
+                foreach (string backupFile in Directory.GetFiles(backupPath, "*.xml"))
+                {
+                    string fileName = Path.GetFileName(backupFile);
+                    string originalPath = Path.Combine(_config.FolderPath, fileName);
+                    File.Copy(backupFile, originalPath, true);
+                    Debug.Log($"[Encryption] Restored {fileName} to {originalPath}");
+                }
+                Directory.Delete(backupPath, true);
+                Debug.Log($"[Encryption] Deleted backup folder {backupPath}");
+            }
+
+            File.WriteAllText(_keyFilePath, GenerateStubContent(), Encoding.UTF8);
 
             AssetDatabase.ImportAsset(RelativePath(_keyFilePath));
             AssetDatabase.Refresh();
