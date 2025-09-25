@@ -48,7 +48,7 @@ namespace CGK.Encryption.Editor
             {
                 Debug.Log("[Encryption] Encryption disabled in GameConfig.xml.");
                 _skipEncryption = true;
-                SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_ROOT_CONFIG, "encrypt.json"));
+                SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_GAME_CONFIG, "encrypt.json"));
                 return;
             }
 
@@ -82,7 +82,7 @@ namespace CGK.Encryption.Editor
             encryptionInto.IsEncrypted = true;
             AssetDatabase.ImportAsset(RelativePath(_keyFilePath));
             AssetDatabase.Refresh();
-            SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_ROOT_CONFIG, "encrypt.json"));
+            SaveEncryptFlag(encryptionInto, Path.Combine(PATH_TO_GAME_CONFIG, "encrypt.json"));
 
             Debug.Log("[Encryption] Preprocess build finished");
         }
