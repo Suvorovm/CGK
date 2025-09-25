@@ -17,7 +17,7 @@ namespace CGK.Encryption.Editor
         private const string PATH_TO_GAME_CONFIG = "Assets/Resources/Config";
         private const string GENERATED_KEY_PATH = "Assets/Scripts/Encryption/generated";
         private const string TEMP_BACKUP_PATH = "Temp/EncryptionBackup";
-        private const string BYTES_EXTENSION = ".enc";
+        private const string BYTES_EXTENSION = ".bytes";
 
         private EncryptionConfig _config;
         private BuildProcess _buildProcess;
@@ -26,7 +26,7 @@ namespace CGK.Encryption.Editor
         private bool _skipEncryption;
         private List<string> _createdEncryptedFiles;
 
-        public int callbackOrder => -1000; // Ранний запуск
+        public int callbackOrder => -1000;
 
         public void OnPreprocessBuild(BuildReport report)
         {
@@ -109,18 +109,24 @@ namespace CGK.Encryption.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-            // Encrypt files and track created .bytes files
+            // Encrypt files and track created .enc files
             _createdEncryptedFiles = _buildProcess.Run(backupPath);
             encryptionInto.IsEncrypted = true;
 
             if (_createdEncryptedFiles.Count == 0)
             {
-                Debug.LogError($"[Encryption] No .bytes files created in {_config.FolderPath}. Build may fail!");
+                Debug.LogError($"[Encryption] No .enc files created in {_config.FolderPath}. Build may fail!");
             }
 
-            // Import encrypted files
+            // Import and configure encrypted files
             foreach (string encFile in _createdEncryptedFiles)
             {
+                if (!File.Exists(encFile))
+                {
+                    Debug.LogError($"[Encryption] Encrypted file {encFile} does not exist!");
+                    continue;
+                }
+
                 string relativePath = RelativePath(encFile);
                 AssetDatabase.ImportAsset(relativePath, ImportAssetOptions.ForceUpdate);
                 var importer = AssetImporter.GetAtPath(relativePath);
@@ -128,8 +134,7 @@ namespace CGK.Encryption.Editor
                 {
                     importer.assetBundleName = null;
                     importer.userData = "EncryptedConfig";
-                    importer.SaveAndReimport();
-                    Debug.Log($"[Encryption] Imported and configured {relativePath} as TextAsset");
+                    Debug.Log($"[Encryption] Configured {relativePath} as TextAsset");
                 }
                 else
                 {
@@ -233,5 +238,4 @@ namespace RuntimeSecurity
 }";
         }
     }
-    
 }

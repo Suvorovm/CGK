@@ -4,13 +4,14 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using UnityEngine;
+using CGK.Encryption.Descriptor;
 
 namespace CGK.Encryption.Editor
 {
     public class BuildProcess
     {
         private const string GENERATED_KEY_PATH = "Assets/Scripts/Encryption/generated";
-        private const string BYTES_EXTENSION = ".enc";
+        private const string BYTES_EXTENSION = ".bytes";
 
         private readonly EncryptionConfig _config;
 
@@ -35,6 +36,8 @@ namespace CGK.Encryption.Editor
                 Debug.LogWarning($"[Encryption] No XML files found in backup {backupPath}");
                 return;
             }
+
+            Debug.Log($"[Encryption] Found {files.Length} XML files in {backupPath} for encryption");
 
             foreach (string file in files)
             {

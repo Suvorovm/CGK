@@ -16,8 +16,11 @@ namespace CGK.Encryption.Editor
                     {
                         importer.assetBundleName = null;
                         importer.userData = "EncryptedConfig";
-                        importer.SaveAndReimport();
                         Debug.Log($"[Encryption] Configured {assetPath} as TextAsset for build");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Encryption] No AssetImporter found for {assetPath}");
                     }
                 }
             }
