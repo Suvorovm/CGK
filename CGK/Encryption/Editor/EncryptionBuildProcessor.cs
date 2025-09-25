@@ -13,6 +13,7 @@ namespace CGK.Encryption.Editor
     public class EncryptionBuildProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
         private const string PATH_TO_ROOT_CONFIG = "Assets/Config";
+        private const string PATH_TO_GAME_CONFIG= "Assets/Resources/Config";
         private EncryptionConfig _config;
         private BuildProcess _buildProcess;
         private string _keyFilePath;
@@ -26,7 +27,7 @@ namespace CGK.Encryption.Editor
             Debug.Log("[Encryption] Preprocess build started");
 
             // Загружаем GameConfig
-            string gameConfigPath = Path.Combine(PATH_TO_ROOT_CONFIG, "GameConfig.xml");
+            string gameConfigPath = Path.Combine(PATH_TO_GAME_CONFIG, "GameConfig.xml");
             if (!File.Exists(gameConfigPath))
             {
                 Debug.Log("[Encryption] GameConfig.xml Not fount. No Encryption.");
