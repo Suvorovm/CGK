@@ -21,6 +21,7 @@ namespace CGK.Descriptor.Service
             byte[] encryptedBytes = Convert.FromBase64String(content);
             byte[] decryptedBytes = RuntimeDecryptor.Decrypt(encryptedBytes);
             string xml = Encoding.UTF8.GetString(decryptedBytes);
+            xml = xml.Trim('\uFEFF', '\u0000', '\r', '\n', ' ');
 
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);
