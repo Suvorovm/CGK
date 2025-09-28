@@ -227,15 +227,17 @@ namespace CGK.Encryption.Editor
         private static string GenerateStubContent()
         {
             return @"
+using CGK.Encryption.Abstraction;
+
 namespace RuntimeSecurity
-{{
+{
     internal partial class EncryptionKeyHolder : IEncryptionKeyProvider
-        {{
+        {
             public static readonly byte[] Key = new byte[0];
 
             public byte[] GetKey() => Key;
-        }}
-}}";
+        }
+}";
         }
     }
 }
