@@ -10,7 +10,6 @@ namespace CGK.Encryption.Editor
 {
     public class BuildProcess
     {
-        private const string GENERATED_KEY_PATH = "Assets/Scripts/Encryption/generated";
         private const string BYTES_EXTENSION = ".bytes";
 
         private readonly EncryptionConfig _config;
@@ -80,16 +79,16 @@ namespace CGK.Encryption.Editor
 
 namespace RuntimeSecurity
 {{
-    internal sealed class EncryptionKeyHolder : IEncryptionKeyProvider
-    {{
-        public static readonly byte[] Key = new byte[] {{ {byteArrayString} }};
+    internal partial class EncryptionKeyHolder : IEncryptionKeyProvider
+        {{
+            public static readonly byte[] Key = new byte[] {{ {byteArrayString} }};
 
-        public byte[] GetKey() => Key;
-    }}
+            public byte[] GetKey() => Key;
+        }}
 }}";
 
-            Directory.CreateDirectory(GENERATED_KEY_PATH);
-            string path = Path.Combine(GENERATED_KEY_PATH, "EncryptionKeyHolder.cs");
+            Directory.CreateDirectory(_config.GeneratedKeyPath);
+            string path = Path.Combine(_config.GeneratedKeyPath, "EncryptionKeyHolder.cs");
             File.WriteAllText(path, code, Encoding.UTF8);
             Debug.Log($"[Encryption] Generated {path}");
         }

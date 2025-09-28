@@ -12,5 +12,10 @@ namespace CGK.Encryption.Descriptor
         [XmlAttribute("encryptionKey")]
         public string EncryptionKey { get; set; }
         
+        [XmlAttribute("generatedKeyPath")]
+        public string GeneratedKeyPath { get; set; }
+        
+        [XmlAttribute("tempBackupPath")]
+        public string TempBackupPath { get; set; }
     }
 }

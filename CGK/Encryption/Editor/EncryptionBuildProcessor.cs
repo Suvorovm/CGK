@@ -15,8 +15,6 @@ namespace CGK.Encryption.Editor
     {
         private const string PATH_TO_ROOT_CONFIG = "Assets/Config";
         private const string PATH_TO_GAME_CONFIG = "Assets/Resources/Config";
-        private const string GENERATED_KEY_PATH = "Assets/Scripts/Encryption/generated";
-        private const string TEMP_BACKUP_PATH = "Temp/EncryptionBackup";
         private const string BYTES_EXTENSION = ".bytes";
 
         private EncryptionConfig _config;
@@ -71,8 +69,8 @@ namespace CGK.Encryption.Editor
             _config = new DescriptorFileLoader().LoadDescriptorFromString<EncryptionConfig>(File.ReadAllText(configPath));
             _buildProcess = new BuildProcess(_config);
 
-            _keyFilePath = Path.Combine(GENERATED_KEY_PATH, "EncryptionKeyHolder.cs");
-            Directory.CreateDirectory(GENERATED_KEY_PATH);
+            _keyFilePath = Path.Combine(_config.GeneratedKeyPath, "EncryptionKeyHolder.cs");
+            Directory.CreateDirectory(_config.GeneratedKeyPath);
 
             if (File.Exists(_keyFilePath))
             {
@@ -86,7 +84,7 @@ namespace CGK.Encryption.Editor
             }
 
             // Create backup and delete original XML files
-            string backupPath = Path.Combine(Directory.GetCurrentDirectory(), TEMP_BACKUP_PATH);
+            string backupPath = Path.Combine(Directory.GetCurrentDirectory(), _config.TempBackupPath);
             Directory.CreateDirectory(backupPath);
             foreach (string file in Directory.GetFiles(_config.FolderPath, "*.xml"))
             {
@@ -174,7 +172,7 @@ namespace CGK.Encryption.Editor
             }
 
             // Restore original XML files from backup
-            string backupPath = Path.Combine(Directory.GetCurrentDirectory(), TEMP_BACKUP_PATH);
+            string backupPath = Path.Combine(Directory.GetCurrentDirectory(), _config.TempBackupPath);
             if (Directory.Exists(backupPath))
             {
                 foreach (string backupFile in Directory.GetFiles(backupPath, "*.xml"))
@@ -230,12 +228,14 @@ namespace CGK.Encryption.Editor
         {
             return @"
 namespace RuntimeSecurity
-{
-    internal static class EncryptionKeyHolder
-    {
-        public static readonly byte[] Key = new byte[0];
-    }
-}";
+{{
+    internal partial class EncryptionKeyHolder : IEncryptionKeyProvider
+        {{
+            public static readonly byte[] Key = new byte[0];
+
+            public byte[] GetKey() => Key;
+        }}
+}}";
         }
     }
 }
