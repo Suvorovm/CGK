@@ -11,6 +11,7 @@ namespace CGK.Encryption.Editor
     public class BuildProcess
     {
         private const string BYTES_EXTENSION = ".bytes";
+        private static readonly UTF8Encoding Utf8NoBom = new UTF8Encoding(false);
 
         private readonly EncryptionConfig _config;
 
@@ -53,9 +54,11 @@ namespace CGK.Encryption.Editor
                     byte[] encrypted = Encrypt(plainBytes, keyHash);
                     string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file);
                     string outPath = Path.Combine(_config.FolderPath, fileNameWithoutExtension + BYTES_EXTENSION);
-                    File.WriteAllBytes(outPath, encrypted);
+                    
+                    File.WriteAllText(outPath, Convert.ToBase64String(encrypted), Utf8NoBom);
+
                     createdEncryptedFiles.Add(outPath);
-                    Debug.Log($"[Encryption] Encrypted {Path.GetFileName(file)} from backup to {Path.GetFileName(outPath)}");
+                    Debug.Log($"[Encryption] Encrypted {Path.GetFileName(file)} -> {Path.GetFileName(outPath)}");
                 }
                 catch (Exception ex)
                 {
@@ -80,16 +83,18 @@ namespace CGK.Encryption.Editor
 namespace RuntimeSecurity
 {{
     internal partial class EncryptionKeyHolder : IEncryptionKeyProvider
-        {{
-            public static readonly byte[] Key = new byte[] {{ {byteArrayString} }};
+    {{
+        public static readonly byte[] Key = new byte[] {{ {byteArrayString} }};
 
-            public byte[] GetKey() => Key;
-        }}
+        public byte[] GetKey() => Key;
+    }}
 }}";
 
             Directory.CreateDirectory(_config.GeneratedKeyPath);
             string path = Path.Combine(_config.GeneratedKeyPath, "EncryptionKeyHolder.cs");
-            File.WriteAllText(path, code, Encoding.UTF8);
+            
+            File.WriteAllText(path, code, Utf8NoBom);
+
             Debug.Log($"[Encryption] Generated {path}");
         }
 

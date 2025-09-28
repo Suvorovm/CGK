@@ -17,6 +17,8 @@ namespace CGK.Encryption.Editor
         private const string PATH_TO_GAME_CONFIG = "Assets/Resources/Config";
         private const string BYTES_EXTENSION = ".bytes";
 
+        private static readonly UTF8Encoding Utf8NoBom = new UTF8Encoding(false);
+
         private EncryptionConfig _config;
         private BuildProcess _buildProcess;
         private string _keyFilePath;
@@ -43,7 +45,8 @@ namespace CGK.Encryption.Editor
             EncryptionInto encryptionInto = new EncryptionInto { IsEncrypted = false };
             DescriptorFileLoader loader = new DescriptorFileLoader();
             GameConfig gameConfig;
-            using (StreamReader reader = new StreamReader(gameConfigPath))
+            
+            using (StreamReader reader = new StreamReader(gameConfigPath, Utf8NoBom))
             {
                 string xml = reader.ReadToEnd();
                 gameConfig = loader.LoadDescriptorFromString<GameConfig>(xml);
@@ -66,7 +69,9 @@ namespace CGK.Encryption.Editor
                 return;
             }
 
-            _config = new DescriptorFileLoader().LoadDescriptorFromString<EncryptionConfig>(File.ReadAllText(configPath));
+            _config = new DescriptorFileLoader().LoadDescriptorFromString<EncryptionConfig>(
+                File.ReadAllText(configPath, Utf8NoBom));
+
             _buildProcess = new BuildProcess(_config);
 
             _keyFilePath = Path.Combine(_config.GeneratedKeyPath, "EncryptionKeyHolder.cs");
@@ -74,12 +79,12 @@ namespace CGK.Encryption.Editor
 
             if (File.Exists(_keyFilePath))
             {
-                _backupKeyContent = File.ReadAllText(_keyFilePath);
+                _backupKeyContent = File.ReadAllText(_keyFilePath, Utf8NoBom);
             }
             else
             {
                 _backupKeyContent = GenerateStubContent();
-                File.WriteAllText(_keyFilePath, _backupKeyContent, Encoding.UTF8);
+                File.WriteAllText(_keyFilePath, _backupKeyContent, Utf8NoBom);
                 Debug.Log("[Encryption] Created stub EncryptionKeyHolder.cs");
             }
 
@@ -107,13 +112,13 @@ namespace CGK.Encryption.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-            // Encrypt files and track created .enc files
+            // Encrypt files and track created .bytes files
             _createdEncryptedFiles = _buildProcess.Run(backupPath);
             encryptionInto.IsEncrypted = true;
 
             if (_createdEncryptedFiles.Count == 0)
             {
-                Debug.LogError($"[Encryption] No .enc files created in {_config.FolderPath}. Build may fail!");
+                Debug.LogError($"[Encryption] No encrypted files created in {_config.FolderPath}. Build may fail!");
             }
 
             // Import and configure encrypted files
@@ -200,7 +205,7 @@ namespace CGK.Encryption.Editor
                 Debug.LogError($"[Encryption] Backup folder {backupPath} not found. XML files not restored!");
             }
 
-            File.WriteAllText(_keyFilePath, GenerateStubContent(), Encoding.UTF8);
+            File.WriteAllText(_keyFilePath, GenerateStubContent(), Utf8NoBom);
             AssetDatabase.ImportAsset(RelativePath(_keyFilePath), ImportAssetOptions.ForceUpdate);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
@@ -211,7 +216,7 @@ namespace CGK.Encryption.Editor
         private void SaveEncryptFlag(EncryptionInto encryptionInto, string path)
         {
             string json = JsonUtility.ToJson(encryptionInto, true);
-            File.WriteAllText(path, json, Encoding.UTF8);
+            File.WriteAllText(path, json, Utf8NoBom);
             string relativePath = RelativePath(path);
             AssetDatabase.ImportAsset(relativePath, ImportAssetOptions.ForceUpdate);
             Debug.Log($"[Encryption] Encryption flag saved to: {relativePath}");
